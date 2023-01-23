@@ -12,7 +12,7 @@ functions.set_threads(args)
 
 # define histograms
 bins_p_mu = (20000, 0, 200) # 10 MeV bins
-bins_m_ll = (20000, 0, 300) # 10 MeV bins
+bins_m_ll = (10000, 0, 100) # 10 MeV bins
 bins_p_ll = (20000, 0, 200) # 10 MeV bins
 bins_en = (1000, 0, 100)
 bins_n = (2,0,2)
@@ -24,7 +24,7 @@ bins_count = (50, 0, 50)
 bins_pdgid = (60, -30, 30)
 bins_charge = (10, -5, 5)
 
-
+bins_cos = (100, -1, 1)
 
 def build_graph_ll(df, dataset):
 
@@ -41,6 +41,19 @@ def build_graph_ll(df, dataset):
     df = df.Alias("MCRecoAssociations1", "MCRecoAssociations#1.index")
     df = df.Alias("Lepton0", "Muon#0.index")
 
+    # gen muons
+    df = df.Define("gen_muons", "FCCAnalyses::get_gen_pdg(Particle, 13)") # muon pdg index=13
+    df = df.Define("gen_muons_p", "FCCAnalyses::MCParticle::get_p(gen_muons)")
+    df = df.Define("gen_muons_theta", "FCCAnalyses::MCParticle::get_theta(gen_muons)")
+    df = df.Define("gen_muons_phi", "FCCAnalyses::MCParticle::get_phi(gen_muons)")
+    df = df.Define("gen_muons_no", "FCCAnalyses::MCParticle::get_n(gen_muons)")
+    
+    results.append(df.Histo1D(("gen_muons_p", "", *bins_p_mu), "gen_muons_p"))
+    results.append(df.Histo1D(("gen_muons_theta", "", *bins_theta), "gen_muons_theta"))
+    results.append(df.Histo1D(("gen_muons_phi", "", *bins_phi), "gen_muons_phi"))
+    results.append(df.Histo1D(("gen_muons_no", "", *bins_count), "gen_muons_no"))
+    
+    results.append(df.Histo1D(("evts_initial", "", *bins_count), "weight"))
     
     
     # get the leptons leptons
@@ -81,6 +94,17 @@ def build_graph_ll(df, dataset):
     
     # final
     results.append(df.Histo1D(("nfinal", "", *bins_n), "weight"))
+    df = df.Filter("leps_all_no == 2")
+    
+    df = df.Define("m_inv", "(leps_tlv[0]+leps_tlv[1]).M()")
+    df = df.Filter("m_inv >= 50")
+    
+    
+    df = df.Define("missingEnergy_vec", "FCCAnalyses::missingEnergy(91., ReconstructedParticles)")
+    df = df.Define("missingEnergy", "missingEnergy_vec[0].energy")
+
+    df = df.Define("visibleEnergy", "FCCAnalyses::visibleEnergy(ReconstructedParticles)")
+    
     
     results.append(df.Histo1D(("leps_all_p", "", *bins_p_mu), "leps_all_p"))
     results.append(df.Histo1D(("leps_all_theta", "", *bins_theta), "leps_all_theta"))
@@ -90,7 +114,26 @@ def build_graph_ll(df, dataset):
     results.append(df.Histo1D(("m_inv", "", *bins_m_ll), "m_inv"))
     results.append(df.Histo1D(("emiss", "", *bins_en), "emiss"))
     
+    results.append(df.Histo1D(("m_inv", "", *bins_m_ll), "m_inv"))
+    results.append(df.Histo1D(("missingEnergy", "", *bins_m_ll), "missingEnergy"))
+    results.append(df.Histo1D(("visibleEnergy", "", *bins_m_ll), "visibleEnergy"))
     
+    df = df.Define("theta_plus", "(leps_all_q[0] > 0) ? leps_all_theta[0] : leps_all_theta[1]")
+    df = df.Define("theta_minus", "(leps_all_q[0] < 0) ? leps_all_theta[0] : leps_all_theta[1]")
+    df = df.Define("cos_theta_plus", "cos(theta_plus)")
+    df = df.Define("cos_theta_minus", "cos(theta_minus)")
+    df = df.Define("cosThetac", "(sin(theta_plus-theta_minus))/(sin(theta_plus)+sin(theta_minus))")
+    
+    results.append(df.Histo1D(("theta_plus", "", *bins_theta), "theta_plus"))
+    results.append(df.Histo1D(("theta_minus", "", *bins_theta), "theta_minus"))
+    results.append(df.Histo1D(("cos_theta_plus", "", *bins_cos), "cos_theta_plus"))
+    results.append(df.Histo1D(("cos_theta_minus", "", *bins_cos), "cos_theta_minus"))
+    
+    
+    results.append(df.Histo1D(("cosThetac", "", *bins_cos), "cosThetac"))
+    
+    
+    results.append(df.Histo1D(("evts_final", "", *bins_count), "weight"))
     return results, weightsum
     
  
