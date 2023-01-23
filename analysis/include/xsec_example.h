@@ -27,8 +27,32 @@ Vec_tlv makeLorentzVectors(Vec_rp in) {
 	return result;
 }
 
+float inv_mass(Vec_tlv in){
+    
+    TLorentzVector result;
+    for (int i =0; i< in.size(); i++){
+        result = result + in[i];
+    }
+    float M = result.M();
+    return M;
+}
 
-
+float one_pt(Vec_tlv in){
+    
+    float result;
+    if (in[0].Pt() > in[1].Pt()){
+        result = in[0].Pt();
+    }
+    
+    else{
+         result = in[0].Pt();
+        
+    }
+    
+    
+    return result;
+    
+}
     
 }
 

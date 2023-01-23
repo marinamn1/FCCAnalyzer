@@ -14,6 +14,8 @@ functions.set_threads(args)
 bins_p_mu = (20000, 0, 200) # 10 MeV bins
 bins_m_ll = (20000, 0, 300) # 10 MeV bins
 bins_p_ll = (20000, 0, 200) # 10 MeV bins
+bins_en = (1000, 0, 100)
+bins_n = (2,0,2)
 
 bins_theta = (500, -5, 5)
 bins_phi = (500, -5, 5)
@@ -49,14 +51,44 @@ def build_graph_ll(df, dataset):
     df = df.Define("leps_all_q", "FCCAnalyses::ReconstructedParticle::get_charge(leps_all)")
     df = df.Define("leps_all_no", "FCCAnalyses::ReconstructedParticle::get_n(leps_all)")
     
+    
+    
     # construct Lorentz vectors of the leptons
     df = df.Define("leps_tlv", "FCCAnalyses::makeLorentzVectors(leps_all)")
+    df = df.Define("m_inv", "FCCAnalyses::inv_mass(leps_tlv)")
+    df = df.Define("missingEnergy", "FCCAnalyses::missingEnergy(91., ReconstructedParticles)")
+    df = df.Define("emiss", "missingEnergy[0].energy")
+    df = df.Define("muon_leading", "(leps_all_p[0] > leps_all_p[1]) ? leps_all_p[0] : leps_all_p[1]")
+    df = df.Define("muon_subleading", "(leps_all_p[0] < leps_all_p[1]) ? leps_all_p[0] : leps_all_p[1]")
+    df = df.Define("one_pt", "FCCAnalyses::one_pt(leps_tlv)")
+
+    
+    # initial 
+    results.append(df.Histo1D(("ninitial", "", *bins_n), "weight"))
+    
+    # Filter
+    df = df.Filter("leps_all_no==2")
+    results.append(df.Histo1D(("n_no", "", *bins_n), "weight"))
+    #df = df.Filter("m_inv>51.6525")
+    #df = df.Filter("emiss<22.45")
+    df = df.Filter("muon_leading > 27.3")
+    results.append(df.Histo1D(("n_p", "", *bins_n), "weight"))
+    df = df.Filter("one_pt > 3")
+    results.append(df.Histo1D(("n_theta", "", *bins_n), "weight"))
+    df = df.Filter("leps_all_theta[0] > 0.200334842 or leps_all_theta[0] > 2.9412578")
+    df = df.Filter("leps_all_theta[1] > 0.200334842 or leps_all_theta[1] > 2.9412578")
+    
+    
+    # final
+    results.append(df.Histo1D(("nfinal", "", *bins_n), "weight"))
     
     results.append(df.Histo1D(("leps_all_p", "", *bins_p_mu), "leps_all_p"))
     results.append(df.Histo1D(("leps_all_theta", "", *bins_theta), "leps_all_theta"))
     results.append(df.Histo1D(("leps_all_phi", "", *bins_phi), "leps_all_phi"))
     results.append(df.Histo1D(("leps_all_q", "", *bins_charge), "leps_all_q"))
     results.append(df.Histo1D(("leps_all_no", "", *bins_count), "leps_all_no"))
+    results.append(df.Histo1D(("m_inv", "", *bins_m_ll), "m_inv"))
+    results.append(df.Histo1D(("emiss", "", *bins_en), "emiss"))
     
     
     return results, weightsum
@@ -73,6 +105,7 @@ if __name__ == "__main__":
     datasets = [] # list of datasets to be run over
 
     datasets += functions.filter_datasets(datasets_spring2021_ecm91, ["p8_ee_Zmumu_ecm91"])
-    result = functions.build_and_run(datasets, build_graph_ll, "tmp/output_xsec_example.root", maxFiles=args.maxFiles)
+    datasets += functions.filter_datasets(datasets_spring2021_ecm91, ["p8_ee_Ztautau_ecm91"])
+    result = functions.build_and_run(datasets, build_graph_ll, "tmp/output_xsec_example.root", maxFiles=args.maxFiles, norm=True, lumi=150000000)
 
     
