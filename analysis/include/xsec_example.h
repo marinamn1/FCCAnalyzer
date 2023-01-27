@@ -14,7 +14,7 @@
 
 namespace FCCAnalyses {
   
-
+using Vec_f = ROOT::VecOps::RVec<float>;
 
 Vec_tlv makeLorentzVectors(Vec_rp in) {
 	
@@ -52,6 +52,11 @@ float one_pt(Vec_tlv in){
     
     return result;
     
+}
+
+Vec_f cos_theta(Vec_f in){
+    Vec_f cos_theta{cos(in[0]),cos(in[1])};
+    return cos_theta;
 }
     
 }

@@ -5,8 +5,8 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--nThreads", type=int, help="number of threads", default=None)
-parser.add_argument("--maxFiles", type=int, help="Max number of files (per dataset)", default=-1)
-parser.add_argument("--flavor", type=str, choices=["ee", "mumu", "qq"], help="Flavor (ee, mumu, qq)", default="mumu")
+parser.add_argument("--maxFiles", type=int, help="Max number of files (per dataset)", default=10)
+parser.add_argument("--flavor", type=str, choices=["ee", "mumu", "qq"], help="Flavor (ee, mumu, qq)", default="qq")
 parser.add_argument("--jetAlgo", type=str, choices=["kt", "valencia", "genkt"], default="genkt", help="Jet clustering algorithm")
 args = parser.parse_args()
 
@@ -163,6 +163,7 @@ def build_graph_qq(df, dataset):
     df = df.Define("RP_e",  "FCCAnalyses::ReconstructedParticle::get_e(ReconstructedParticles)")
     df = df.Define("RP_m",  "FCCAnalyses::ReconstructedParticle::get_mass(ReconstructedParticles)")
     df = df.Define("RP_q",  "FCCAnalyses::ReconstructedParticle::get_charge(ReconstructedParticles)")
+    df = df.Define("RP_no", "FCCAnalyses::ReconstructedParticle::get_n(ReconstructedParticles)")
 
     df = df.Define("pseudo_jets", "FCCAnalyses::JetClusteringUtils::set_pseudoJets(RP_px, RP_py, RP_pz, RP_e)")
     
@@ -175,7 +176,7 @@ def build_graph_qq(df, dataset):
     elif args.jetAlgo == "valencia":
         df = df.Define("clustered_jets", "JetClustering::clustering_valencia(0.5, 1, 2, 0, 0, 1., 1.)(pseudo_jets)")
     elif args.jetAlgo == "genkt":
-        df = df.Define("clustered_jets", "FCCAnalyses::JetClustering::clustering_ee_genkt(1.5, 0, 0, 0, 0, -1)(pseudo_jets)")
+        df = df.Define("clustered_jets", "JetClustering::clustering_ee_genkt(1.5, 0, 0, 0, 0, -1)(pseudo_jets)")
           
 
 
@@ -186,6 +187,8 @@ def build_graph_qq(df, dataset):
     df = df.Define("jets_py", "FCCAnalyses::JetClusteringUtils::get_py(jets)")
     df = df.Define("jets_pz", "FCCAnalyses::JetClusteringUtils::get_pz(jets)")
     df = df.Define("jets_m", "FCCAnalyses::JetClusteringUtils::get_m(jets)")
+    df = df.Define("sum_e", "FCCAnalyses::sum_e(jets_e)")
+    df = df.Define("sum_energy", "FCCAnalyses::sum_energy(RP_e)")
         
     df = df.Define("njets", "jets_e.size()")
     results.append(df.Histo1D(("njets", "", *bins_count), "njets"))
@@ -200,6 +203,9 @@ def build_graph_qq(df, dataset):
     results.append(df.Histo1D(("jets_e", "", *jet_energy), "jets_e"))
     results.append(df.Histo1D(("dijet_m", "", *dijet_m), "dijet_m"))
     results.append(df.Histo1D(("dijet_m_final", "", *dijet_m_final), "dijet_m"))
+    results.append(df.Histo1D(("RP_no", "", *bins_count), "RP_no"))
+    results.append(df.Histo1D(("sum_e", "", *jet_energy), "sum_e"))
+    results.append(df.Histo1D(("sum_energy", "", *jet_energy), "sum_energy"))
    
         
     
@@ -217,8 +223,7 @@ def build_graph_qq(df, dataset):
     
     
     
-   
-
+    
 if __name__ == "__main__":
 
     baseDir = functions.get_basedir() # get base directory of samples, depends on the cluster hostname (mit, cern, ...)
@@ -235,8 +240,11 @@ if __name__ == "__main__":
         result = functions.build_and_run(datasets, build_graph_ll, "tmp/output_z_xsec_ee.root", maxFiles=args.maxFiles, norm=True, lumi=150000000)
  
     if args.flavor == "qq":
-        datasets += functions.filter_datasets(datasets_spring2021_ecm91, ["p8_ee_Zuds_ecm91", "p8_ee_Zcc_ecm91", "p8_ee_Zbb_ecm91"])
-        result = functions.build_and_run(datasets, build_graph_qq, "tmp/output_z_xsec_qq.root", maxFiles=args.maxFiles, norm=True, lumi=150000000)
-
-    
+        datasets += functions.filter_datasets(datasets_spring2021_ecm91, ["p8_ee_Zuds_ecm91", "p8_ee_Zcc_ecm91", "p8_ee_Zbb_ecm91", "wzp6_ee_qq_ecm91p2"])
+        if args.jetAlgo == "kt":
+            result = functions.build_and_run(datasets, build_graph_qq, "tmp/output_z_xsec_qq_kt.root", maxFiles=args.maxFiles, norm=True, lumi=150000000)
+        if args.jetAlgo == "valencia":
+            result = functions.build_and_run(datasets, build_graph_qq, "tmp/output_z_xsec_qq_valencia.root", maxFiles=args.maxFiles, norm=True, lumi=150000000)
+        if args.jetAlgo == "genkt":
+            result = functions.build_and_run(datasets, build_graph_qq, "tmp/output_z_xsec_qq_genkt.root", maxFiles=args.maxFiles, norm=True, lumi=150000000)
     

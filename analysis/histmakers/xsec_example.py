@@ -17,7 +17,7 @@ bins_p_ll = (20000, 0, 200) # 10 MeV bins
 bins_en = (1000, 0, 100)
 bins_n = (2,0,2)
 
-bins_theta = (500, -5, 5)
+bins_theta = (200, -5, 5)
 bins_phi = (500, -5, 5)
 
 bins_count = (50, 0, 50)
@@ -74,38 +74,43 @@ def build_graph_ll(df, dataset):
     df = df.Define("muon_leading", "(leps_all_p[0] > leps_all_p[1]) ? leps_all_p[0] : leps_all_p[1]")
     df = df.Define("muon_subleading", "(leps_all_p[0] < leps_all_p[1]) ? leps_all_p[0] : leps_all_p[1]")
     df = df.Define("one_pt", "FCCAnalyses::one_pt(leps_tlv)")
+    df = df.Define("cos_theta", "FCCAnalyses::cos_theta(leps_all_theta)")
+    df = df.Define("cut0", "0")
+    df = df.Define("cut1", "1")
+    df = df.Define("cut2", "2")
+    df = df.Define("cut3", "3")
+    df = df.Define("cut4", "4")
+    df = df.Define("cut5", "5")
+    df = df.Define("acol","FCCAnalyses::acolinearity(leps_all)")
 
     
     # initial 
-    results.append(df.Histo1D(("ninitial", "", *bins_n), "weight"))
+    results.append(df.Histo1D(("cutFlow", "", *bins_count), "cut0"))
     
     # Filter
     df = df.Filter("leps_all_no==2")
-    results.append(df.Histo1D(("n_no", "", *bins_n), "weight"))
+    results.append(df.Histo1D(("cutFlow", "", *bins_count), "cut1")) 
+    
     #df = df.Filter("m_inv>51.6525")
     #df = df.Filter("emiss<22.45")
     df = df.Filter("muon_leading > 27.3")
-    results.append(df.Histo1D(("n_p", "", *bins_n), "weight"))
+    results.append(df.Histo1D(("cutFlow", "", *bins_count), "cut2"))
     df = df.Filter("one_pt > 3")
-    results.append(df.Histo1D(("n_theta", "", *bins_n), "weight"))
-    df = df.Filter("leps_all_theta[0] > 0.200334842 or leps_all_theta[0] > 2.9412578")
-    df = df.Filter("leps_all_theta[1] > 0.200334842 or leps_all_theta[1] > 2.9412578")
+    results.append(df.Histo1D(("cutFlow", "", *bins_count), "cut3"))
+    df = df.Filter("leps_all_theta[0] > 0.2003348423 and leps_all_theta[0] < 2.941257811")
+    df = df.Filter("leps_all_theta[1] > 0.2003348423 and leps_all_theta[1] < 2.941257811")
+    results.append(df.Histo1D(("cutFlow", "", *bins_count), "cut4"))
     
+    df = df.Filter("acol<1.57079632679")
     
     # final
-    results.append(df.Histo1D(("nfinal", "", *bins_n), "weight"))
-    df = df.Filter("leps_all_no == 2")
-    
-    df = df.Define("m_inv", "(leps_tlv[0]+leps_tlv[1]).M()")
-    df = df.Filter("m_inv >= 50")
-    
-    
-    df = df.Define("missingEnergy_vec", "FCCAnalyses::missingEnergy(91., ReconstructedParticles)")
-    df = df.Define("missingEnergy", "missingEnergy_vec[0].energy")
+    results.append(df.Histo1D(("cutFlow", "", *bins_count), "cut5"))
 
     df = df.Define("visibleEnergy", "FCCAnalyses::visibleEnergy(ReconstructedParticles)")
     
-    
+    results.append(df.Histo1D(("cos_theta", "", *bins_theta), "cos_theta"))
+    results.append(df.Histo1D(("acol", "", *bins_phi), "acol"))
+    results.append(df.Histo1D(("muon_leading", "", *bins_p_mu), "muon_leading"))
     results.append(df.Histo1D(("leps_all_p", "", *bins_p_mu), "leps_all_p"))
     results.append(df.Histo1D(("leps_all_theta", "", *bins_theta), "leps_all_theta"))
     results.append(df.Histo1D(("leps_all_phi", "", *bins_phi), "leps_all_phi"))
@@ -115,7 +120,6 @@ def build_graph_ll(df, dataset):
     results.append(df.Histo1D(("emiss", "", *bins_en), "emiss"))
     
     results.append(df.Histo1D(("m_inv", "", *bins_m_ll), "m_inv"))
-    results.append(df.Histo1D(("missingEnergy", "", *bins_m_ll), "missingEnergy"))
     results.append(df.Histo1D(("visibleEnergy", "", *bins_m_ll), "visibleEnergy"))
     
     df = df.Define("theta_plus", "(leps_all_q[0] > 0) ? leps_all_theta[0] : leps_all_theta[1]")
@@ -149,6 +153,7 @@ if __name__ == "__main__":
 
     datasets += functions.filter_datasets(datasets_spring2021_ecm91, ["p8_ee_Zmumu_ecm91"])
     datasets += functions.filter_datasets(datasets_spring2021_ecm91, ["p8_ee_Ztautau_ecm91"])
+    datasets += functions.filter_datasets(datasets_spring2021_ecm91, ["wzp6_gaga_mumu_5_ecm91p2"])
     result = functions.build_and_run(datasets, build_graph_ll, "tmp/output_xsec_example.root", maxFiles=args.maxFiles, norm=True, lumi=150000000)
 
     

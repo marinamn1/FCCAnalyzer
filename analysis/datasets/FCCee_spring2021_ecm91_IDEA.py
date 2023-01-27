@@ -45,4 +45,16 @@ def get_datasets(baseDir = ""):
         "xsec"      : 6645.46
     })
     
+    datasets.append({
+        "name"      : "wzp6_gaga_mumu_5_ecm91p2",
+        "datadir"   : "/data/submit/cms/store/fccee/winter2023/wzp6_gaga_mumu_5_ecm91p2/",
+        "xsec"      : 5.3393669E+02
+    })
+    
+    datasets.append({
+        "name"      : "wzp6_ee_qq_ecm91p2",
+        "datadir"   : "/data/submit/cms/store/fccee/winter2023/IDEA/wzp6_ee_qq_ecm91p2",
+        "xsec"      : 3.45E+04
+    })
+    
     return datasets

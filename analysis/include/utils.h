@@ -4,7 +4,32 @@
 #include "defines.h"
 
 namespace FCCAnalyses {
+
+float sum_e(Vec_f in){
     
+    float sum = 0;
+    
+    for(int i = 0; i< in.size(); i++){
+        sum += in[i];
+        
+    }
+    
+    return sum;
+}
+    
+float sum_energy(Vec_f in){
+    
+    float sum = 0;
+    
+    for(int i = 0; i< in.size(); i++){
+        sum += in[i];
+    }
+    
+    return sum;
+}
+    
+    
+
 // maps theta [pi/2, pi] to [0, pi/2]
 Vec_f theta_abs(Vec_f in) {
     
@@ -34,7 +59,7 @@ float deltaR(Vec_rp in) {
 
 // acolinearity between two reco particles
 float acolinearity(Vec_rp in) {
-    if(in.size() != 2) return -1;
+    if(in.size() != 2) return -2;
 
     TLorentzVector p1;
     p1.SetXYZM(in[0].momentum.x, in[0].momentum.y, in[0].momentum.z, in[0].mass);
@@ -42,7 +67,7 @@ float acolinearity(Vec_rp in) {
     TLorentzVector p2;
     p2.SetXYZM(in[1].momentum.x, in[1].momentum.y, in[1].momentum.z, in[1].mass);
 
-    float acol = abs(p1.Theta() - p2.Theta());
+    float acol = abs(3.14159265359 - p1.Theta() - p2.Theta());
     return acol;
 }
 
