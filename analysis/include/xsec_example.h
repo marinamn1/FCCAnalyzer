@@ -13,8 +13,10 @@
 #include "ReconstructedParticle2MC.h"
 
 namespace FCCAnalyses {
-  
+
 using Vec_f = ROOT::VecOps::RVec<float>;
+  
+
 
 Vec_tlv makeLorentzVectors(Vec_rp in) {
 	
@@ -29,36 +31,32 @@ Vec_tlv makeLorentzVectors(Vec_rp in) {
 
 float inv_mass(Vec_tlv in){
     
-    TLorentzVector result;
-    for (int i =0; i< in.size(); i++){
-        result = result + in[i];
+    TLorentzVector sum;
+    
+    for (int i=0;i<in.size();i++){
+        sum = sum+in[i];
     }
-    float M = result.M();
-    return M;
+    float sum_m = sum.M();
+    return sum_m;
 }
-
-float one_pt(Vec_tlv in){
     
-    float result;
-    if (in[0].Pt() > in[1].Pt()){
-        result = in[0].Pt();
+float max_pt(Vec_tlv in){
+    float greatest_pt = 0;
+    for(int i = 0; i<in.size(); i++){
+        if(in[i].Pt()>greatest_pt){
+            greatest_pt = in[i].Pt();
+        }
     }
-    
-    else{
-         result = in[0].Pt();
-        
-    }
-    
-    
-    return result;
-    
+    return greatest_pt; 
 }
-
+    
 Vec_f cos_theta(Vec_f in){
-    Vec_f cos_theta{cos(in[0]),cos(in[1])};
-    return cos_theta;
-}
     
+    Vec_f vec_cos_theta{cos(in[0]), cos(in[1])};
+        
+    return vec_cos_theta;
 }
+}
+
 
 #endif

@@ -2,34 +2,103 @@
 #define FCCANALYZER_UTILS_H
 
 #include "defines.h"
+#include <cmath>
+#include <vector>
+#include "TLorentzVector.h"
+#include "ROOT/RVec.hxx"
 
 namespace FCCAnalyses {
+    
+Vec_f cos_thetat(Vec_rp in){
+    Vec_f px = FCCAnalyses::ReconstructedParticle::get_px(in);
+    Vec_f py = FCCAnalyses::ReconstructedParticle::get_py(in);
+    Vec_f pz = FCCAnalyses::ReconstructedParticle::get_pz(in);
+    Vec_f thrust = FCCAnalyses::Algorithms::calculate_thrust()(px,py,pz);
+    return thrust;
+}
 
 float sum_e(Vec_f in){
     
-    float sum = 0;
-    
-    for(int i = 0; i< in.size(); i++){
-        sum += in[i];
-        
+    float total_energy = 0;
+    for (auto & energy : in) {
+        total_energy += energy;
     }
     
-    return sum;
+    return total_energy;
 }
     
 float sum_energy(Vec_f in){
     
-    float sum = 0;
-    
-    for(int i = 0; i< in.size(); i++){
-        sum += in[i];
+    float total_energy = 0;
+    for (auto & energy : in) {
+        total_energy += energy;
     }
     
-    return sum;
+    return total_energy;
 }
     
+float norm_energy(Vec_f in){
     
+    float total_energy = 0;
+    for (auto & energy : in) {
+        total_energy += energy;
+    }
+    float result = total_energy/91.2202;
+    
+    return result;
+}
 
+float mass_inv(ROOT::VecOps::RVec<fastjet::PseudoJet> in){
+    Vec_f jets_px = FCCAnalyses::JetClusteringUtils::get_px(in);
+    Vec_f jets_py = FCCAnalyses::JetClusteringUtils::get_py(in);
+    Vec_f jets_pz = FCCAnalyses::JetClusteringUtils::get_pz(in);
+    Vec_f jets_m = FCCAnalyses::JetClusteringUtils::get_m(in);
+    TLorentzVector result;
+    result.SetXYZM(jets_px[0], jets_py[0], jets_pz[0], jets_m[0]);
+    TLorentzVector temp;
+    for(int i=1;i<in.size();i++){
+        temp.SetXYZM(jets_px[i], jets_py[i], jets_pz[i], jets_m[i]);
+        result += temp;
+    }
+    float mass = result.M();
+    return mass;
+}
+    
+Vec_f e1_e2(ROOT::VecOps::RVec<fastjet::PseudoJet> in){
+    Vec_f jets_e = FCCAnalyses::JetClusteringUtils::get_e(in);
+    float jet1 = 150;
+    float jet2 = 150;
+    if (jets_e[0] >= jets_e[1]){
+        jet1 = jets_e[0];
+        jet2 = jets_e[1];
+    }
+    else{
+        jet1 = jets_e[1];
+        jet2 = jets_e[0];
+    }
+    float ratio = jet1/jet2;
+    Vec_f result = {ratio, jet1, jet2};
+    return result;
+}
+    
+Vec_f cos_thetajet(ROOT::VecOps::RVec<fastjet::PseudoJet> in){
+    Vec_f jets_theta = FCCAnalyses::JetClusteringUtils::get_theta(in);
+    float jet1 = 0;
+    float jet2 = 0;
+    if (jets_theta[0] > jets_theta[0]){
+        jet1 = cos(jets_theta[0]);
+        jet2 = cos(jets_theta[1]);
+    }
+    else{
+        jet1 = cos(jets_theta[1]);
+        jet2 = cos(jets_theta[0]);
+    }
+    Vec_f result = {jet1,jet2};
+    return result;
+}
+ 
+    
+    
 // maps theta [pi/2, pi] to [0, pi/2]
 Vec_f theta_abs(Vec_f in) {
     
@@ -59,7 +128,7 @@ float deltaR(Vec_rp in) {
 
 // acolinearity between two reco particles
 float acolinearity(Vec_rp in) {
-    if(in.size() != 2) return -2;
+    if(in.size() != 2) return -1;
 
     TLorentzVector p1;
     p1.SetXYZM(in[0].momentum.x, in[0].momentum.y, in[0].momentum.z, in[0].mass);
@@ -118,6 +187,45 @@ Vec_rp missingEnergy(float ecm, Vec_rp in, float p_cutoff = 0.0) {
     ret.emplace_back(res);
     return ret;
     
+}
+    
+// float et(Vec_rp in){
+//     Vec_rp emiss = FCCAnalyses::missingEnergy(91.118, in);
+//     rp result = emiss[0];
+//     float et = sqrt(pow(result.momentum.x,2) + pow(result.momentum.y,2));
+//     float et_ = et/FCCAnalyses::sum_energy(FCCAnalyses::ReconstructedParticle::get_e(in));
+//     return et_;
+// }
+    
+    
+// float ep(Vec_rp in){
+//     Vec_rp emiss = FCCAnalyses::missingEnergy(91.118, in);
+//     rp result = emiss[0];
+//     float ep = sqrt(pow(result.momentum.z,2));
+//     float ep_ = ep/FCCAnalyses::sum_energy(FCCAnalyses::ReconstructedParticle::get_e(in));
+//     return ep_;
+// }
+    
+// computes longitudinal and transversal energy balance of all particles
+Vec_f energy_imbalance(Vec_rp in) {
+    
+    float e_tot = 0;
+    float e_trans = 0;
+    float e_long = 0;
+    for(auto &p : in) {
+        float mag = std::sqrt(p.momentum.x*p.momentum.x + p.momentum.y*p.momentum.y + p.momentum.z*p.momentum.z);
+        float cost = p.momentum.z / mag;
+        float sint =  std::sqrt(p.momentum.x*p.momentum.x + p.momentum.y*p.momentum.y) / mag;
+        if(p.momentum.y < 0) sint *= -1.0;
+        e_tot += p.energy;
+        e_long += cost*p.energy;
+        e_trans += sint*p.energy;
+    }
+    Vec_f result;
+    result.push_back(e_tot);
+    result.push_back(std::abs(e_trans));
+    result.push_back(std::abs(e_long));
+    return result;
 }
 
 // calculate the visisble mass of the event
