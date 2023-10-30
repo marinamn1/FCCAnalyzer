@@ -214,5 +214,41 @@ def get_datasets(baseDir = ""):
         "datadir"   : "%s/wzp6_gaga_ee_60_ecm240" % baseDir,
         "xsec"      : 0.873
     })
+    
+    datasets.append({
+        "name"      : "p8_ee_Zuu_ecm91p2_noBES_noISR",
+        "datadir"   : "%s/p8_ee_Zuu_ecm91p2_noBES_noISR" % baseDir,
+        "xsec"      : 5353.596845
+    })
+    
+    datasets.append({
+        "name"      : "kkmc_ee_uu_ecm91p2_noBES_noISR",
+        "datadir"   : "%s/kkmc_ee_uu_ecm91p2_noBES_noISR" % baseDir,
+        "xsec"      : 5353.596845
+    })
+    
+    datasets.append({
+        "name"      : "wz3p8_ee_uu_ecm91p2_noBES_noISR",
+        "datadir"   : "%s/wz3p8_ee_uu_ecm91p2_noBES_noISR" % baseDir,
+        "xsec"      : 5353.596845
+    })
+    
+    datasets.append({
+        "name"      : "kkmc_ee_uu_ecm91p2",
+        "datadir"   : "%s/kkmc_ee_uu_ecm91p2" % baseDir,
+        "xsec"      : 5353.596845
+    })
+    
+    datasets.append({
+        "name"      : "wz3p8_ee_uu_ecm91p2",
+        "datadir"   : "%s/wz3p8_ee_uu_ecm91p2" % baseDir,
+        "xsec"      : 5353.596845
+    })
+    
+    datasets.append({
+        "name"      : "wzp6_ee_uu_ecm91p2",
+        "datadir"   : "%s/wzp6_ee_uu_ecm91p2" % baseDir,
+        "xsec"      : 5353.596845
+    })
 
     return datasets

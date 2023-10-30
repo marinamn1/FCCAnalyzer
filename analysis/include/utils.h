@@ -27,6 +27,17 @@ Vec_rp VisibleParticles(float limit, Vec_rp in){
     }
     return result;
 }
+    
+Vec_mc MCVisibleParticles(float limit, Vec_mc in){
+    Vec_f angle = FCCAnalyses::MCParticle::get_theta(in);
+    Vec_mc result;
+    for(int i=1;i<in.size();i++){
+        if (angle[i] > limit && angle[i] < 3.14159265359-limit){
+        result.push_back(in[i]);
+    }
+    }
+    return result;
+}
 
 Vec_rp NonVisibleParticles(float limit, Vec_rp in){
     Vec_f angle = FCCAnalyses::ReconstructedParticle::get_theta(in);
@@ -60,6 +71,45 @@ Vec_rp charged(Vec_rp in){
     }
     return result;
 }
+    
+Vec_mc mc_charged(Vec_mc in){
+    Vec_f charges = FCCAnalyses::MCParticle::get_charge(in);
+    Vec_mc result;
+    for(int i=1;i<in.size();i++){
+        if (charges[i]!=0){
+        result.push_back(in[i]);
+    }
+    }
+    return result;
+}
+    
+Vec_rp sel_LEP(Vec_rp in){
+    Vec_f pt = FCCAnalyses::ReconstructedParticle::get_pt(in);
+    Vec_f theta = FCCAnalyses::ReconstructedParticle::get_theta(in);
+    Vec_rp result;
+    for(int i=1;i<in.size();i++){
+        if (pt[i]>0.2){
+            if (theta[i] > 0.349 && theta[i] < 2.792){
+                result.push_back(in[i]);
+            }
+        }
+    }
+    return result;
+}
+    
+Vec_mc sel_LEP_mc(Vec_mc in){
+    Vec_f pt = FCCAnalyses::MCParticle::get_pt(in);
+    Vec_f theta = FCCAnalyses::MCParticle::get_theta(in);
+    Vec_mc result;
+    for(int i=1;i<in.size();i++){
+        if (pt[i]>0.2){
+            if (theta[i] > 0.349 && theta[i] < 2.792){
+                result.push_back(in[i]);
+            }
+        }
+    }
+    return result;
+}
 
 float sum_e(Vec_f in){
     
@@ -84,13 +134,21 @@ float sum_energy(Vec_f in){
 float norm_energy(Vec_f in){
     
     float total_energy = 0;
-    for (auto & energy : in) {
-        total_energy += energy;
+    for(int i=1;i<in.size();i++){
+        total_energy += in[i];
     }
     float result = total_energy/91.2202;
     
     return result;
 }
+    
+Vec_f norm_RP_e(Vec_f in){
+    Vec_f result;
+    for(int i=1;i<in.size();i++){
+        result.push_back(in[i]/91.2202);
+    }
+    return result;
+} 
 
 float mass_inv(ROOT::VecOps::RVec<fastjet::PseudoJet> in){
     Vec_f jets_px = FCCAnalyses::JetClusteringUtils::get_px(in);
